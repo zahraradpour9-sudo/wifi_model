@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سامانه تصمیم‌یار مکانیابی روتر (آفلاین)</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        body { background: #f4f7fc; padding: 20px; display: flex; justify-content: center; }
+        .main-container { max-width: 1400px; width: 100%; background: white; border-radius: 32px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); padding: 30px 35px; }
+        .header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; border-bottom: 2px solid #eef2f6; padding-bottom: 18px; margin-bottom: 28px; }
+        .header h1 { font-size: 26px; font-weight: 700; color: #0b2b4a; }
+        .header h1 i { color: #2a6fdb; margin-left: 10px; }
+        .header .badge-version { background: #e8edf9; padding: 6px 16px; border-radius: 30px; font-size: 14px; color: #1e4a7a; font-weight: 500; }
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 25px; }
+        @media (max-width: 900px) { .row { grid-template-columns: 1fr; gap: 15px; } }
+        .card { background: #f9fafc; border-radius: 20px; padding: 22px 24px; border: 1px solid #e6edf4; }
+        .card-title { font-size: 17px; font-weight: 600; color: #1e3b5c; margin-bottom: 18px; display: flex; align-items: center; gap: 10px; }
+        .card-title i { color: #2a6fdb; width: 24px; text-align: center; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-weight: 500; color: #2c3e50; font-size: 14px; margin-bottom: 4px; }
+        .form-group input, .form-group select { width: 100%; padding: 10px 14px; border: 1.5px solid #dce3ec; border-radius: 12px; font-size: 14px; background: white; transition: 0.15s; }
+        .form-group input:focus, .form-group select:focus { border-color: #2a6fdb; outline: none; box-shadow: 0 0 0 3px rgba(42,111,219,0.15); }
+        .btn-primary { background: #1a4f8b; color: white; border: none; padding: 14px 28px; border-radius: 50px; font-size: 18px; font-weight: 600; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 10px; box-shadow: 0 8px 18px rgba(26,79,139,0.25); }
+        .btn-primary:hover { background: #0e3d6e; transform: scale(1.01); box-shadow: 0 12px 28px rgba(26,79,139,0.35); }
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+        .btn-success { background: #0f7b4b; color: white; border: none; padding: 12px 24px; border-radius: 50px; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+        .btn-success:hover { background: #0a5f39; }
+        .btn-outline { background: transparent; border: 1.5px solid #b0c6dd; color: #1e3b5c; padding: 8px 18px; border-radius: 30px; cursor: pointer; font-weight: 500; transition: 0.15s; }
+        .btn-outline:hover { background: #eef4fa; border-color: #2a6fdb; }
+        .faculty-list { max-height: 300px; overflow-y: auto; margin-top: 8px; }
+        .faculty-item { background: white; padding: 10px 14px; border-radius: 12px; margin-bottom: 8px; border: 1px solid #e2e9f2; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; }
+        .faculty-item .name { font-weight: 600; color: #0b2b4a; }
+        .faculty-item .info { font-size: 13px; color: #4d627a; }
+        .faculty-item .remove-btn { color: #b22234; cursor: pointer; font-size: 18px; transition: 0.15s; }
+        .faculty-item .remove-btn:hover { transform: scale(1.2); color: #a00; }
+        .status-box { background: #eef4fa; border-radius: 16px; padding: 18px 22px; margin: 18px 0; display: none; align-items: center; gap: 18px; border: 1px solid #c5d8ec; }
+        .status-box.show { display: flex; }
+        .spinner { width: 36px; height: 36px; border: 4px solid #dce3ec; border-top: 4px solid #1a4f8b; border-radius: 50%; animation: spin 0.9s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .status-box .msg { font-size: 18px; font-weight: 500; color: #0b2b4a; }
+        .status-box .msg i { margin-left: 10px; color: #1a4f8b; }
+        .result-section { margin-top: 30px; border-top: 2px solid #e6edf4; padding-top: 25px; }
+        .result-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; margin: 20px 0; }
+        @media (max-width: 800px) { .result-grid { grid-template-columns: 1fr 1fr; } }
+        @media (max-width: 500px) { .result-grid { grid-template-columns: 1fr; } }
+        .stat-card { background: #f2f6fd; border-radius: 16px; padding: 16px 20px; border-right: 5px solid #2a6fdb; }
+        .stat-card .label { font-size: 13px; color: #4d627a; }
+        .stat-card .value { font-size: 22px; font-weight: 700; color: #0b2b4a; margin-top: 4px; }
+        .stat-card.green { border-right-color: #0f7b4b; }
+        .stat-card.gold { border-right-color: #b68b2c; }
+        .stat-card.purple { border-right-color: #6f42c1; }
+        .detail-table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 15px 0; }
+        .detail-table th { background: #e8eff8; color: #1a3b5c; padding: 12px 10px; text-align: center; }
+        .detail-table td { padding: 10px 10px; border-bottom: 1px solid #e2e9f2; text-align: center; }
+        .detail-table tr:hover td { background: #f7faff; }
+        .explanation-box { background: #eaf3fa; padding: 20px 24px; border-radius: 18px; margin: 20px 0; line-height: 1.8; border: 1px solid #c5d8ec; }
+        .explanation-box strong { color: #0b2b4a; }
+        .map-container { background: #f0f4fa; border-radius: 20px; padding: 10px; margin: 18px 0; text-align: center; }
+        canvas { max-width: 100%; border-radius: 16px; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+        .flex-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+        .mt-2 { margin-top: 12px; }
+        .mb-2 { margin-bottom: 12px; }
+        .text-muted { color: #5d7188; font-size: 14px; }
+        .solver-badge { background: #f39c12; color: white; padding: 2px 14px; border-radius: 30px; font-size: 13px; font-weight: 600; margin-right: 10px; display: inline-block; }
+        .fade-in { animation: fadeIn 0.5s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #e6edf4; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #b0c6dd; border-radius: 10px; }
+    </style>
+</head>
+<body>
+<div class="main-container">
+    <div class="header">
+        <h1><i class="fas fa-wifi"></i> سامانه تصمیم‌یار مکانیابی روتر</h1>
+        <span class="badge-version"><i class="fas fa-code-branch"></i> v4.1 <span class="solver-badge">Greedy</span></span>
+    </div>
+
+    <div class="row">
+        <!-- ستون چپ: دانشکده‌ها -->
+        <div class="card">
+            <div class="card-title"><i class="fas fa-university"></i> دانشکده‌ها</div>
+            <div class="form-group">
+                <label>نام دانشکده</label>
+                <input type="text" id="facultyName" placeholder="مثلاً مهندسی برق">
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                <div class="form-group"><label>X</label><input type="number" id="facultyX" value="10" step="0.1"></div>
+                <div class="form-group"><label>Y</label><input type="number" id="facultyY" value="20" step="0.1"></div>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                <div class="form-group"><label>طول</label><input type="number" id="facultyW" value="20" step="1"></div>
+                <div class="form-group"><label>عرض</label><input type="number" id="facultyH" value="15" step="1"></div>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                <div class="form-group"><label>تعداد دانشجویان</label><input type="number" id="facultyPop" value="1000" step="100"></div>
+                <div class="form-group"><label>سرعت ویژه (Mbps)</label><input type="number" id="facultySpecial" value="0" step="10"></div>
+            </div>
+            <div class="form-group">
+                <label>سرعت مطلوب هر دانشجو (Mbps)</label>
+                <input type="number" id="facultyUserSpeed" value="1" step="0.5" min="1" max="10">
+            </div>
+            <div class="flex-row">
+                <button class="btn-success" onclick="addFaculty()"><i class="fas fa-plus"></i> افزودن</button>
+                <button class="btn-outline" onclick="loadSampleFaculties()"><i class="fas fa-database"></i> نمونه</button>
+            </div>
+            <div class="faculty-list" id="facultyListContainer"></div>
+        </div>
+
+        <!-- ستون راست: تنظیمات -->
+        <div class="card">
+            <div class="card-title"><i class="fas fa-sliders-h"></i> تنظیمات و سناریوها</div>
+            <div class="form-group">
+                <label>نقاط کاندید</label>
+                <select id="candidateMode">
+                    <option value="center">فقط مرکز (Nodal)</option>
+                    <option value="surface" selected>مرکز + ۴ رأس (Surface)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>حداکثر تعداد روتر</label>
+                <input type="number" id="maxRouters" placeholder="خالی = خودکار" min="1" max="20">
+            </div>
+            <div class="form-group">
+                <label>مدل روتر</label>
+                <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:4px;">
+                    <label style="display:flex; align-items:center; gap:6px;"><input type="checkbox" id="ckEconomy" checked> اقتصادی</label>
+                    <label style="display:flex; align-items:center; gap:6px;"><input type="checkbox" id="ckMedium" checked> متوسط</label>
+                    <label style="display:flex; align-items:center; gap:6px;"><input type="checkbox" id="ckAdvanced" checked> حرفه‌ای</label>
+                </div>
+            </div>
+
+            <div style="background:#eef4fa; border-radius:16px; padding:16px; margin:16px 0; border:1px solid #c5d8ec;">
+                <div style="font-weight:600; color:#1a3b5c; margin-bottom:12px;"><i class="fas fa-flask"></i> سناریوها</div>
+                <div class="form-group">
+                    <label>ضریب کاهش برد (دیوار)</label>
+                    <input type="range" id="wallFactor" min="0.5" max="1.0" step="0.05" value="1.0" style="width:100%;">
+                    <div style="display:flex; justify-content:space-between;"><span>۰.۵</span><span id="wallFactorLabel">۱.۰۰</span><span>۱.۰</span></div>
+                </div>
+                <div class="form-group">
+                    <label>ضریب اتصال همزمان (تراکم)</label>
+                    <input type="range" id="concurrencyFactor" min="0.2" max="0.9" step="0.05" value="0.4" style="width:100%;">
+                    <div style="display:flex; justify-content:space-between;"><span>۰.۲</span><span id="concurrencyFactorLabel">۰.۴۰</span><span>۰.۹</span></div>
+                </div>
+                <div class="form-group">
+                    <label>سرعت پیش‌فرض هر کاربر (Mbps)</label>
+                    <input type="range" id="defaultUserSpeed" min="1" max="5" step="0.5" value="1" style="width:100%;">
+                    <div style="display:flex; justify-content:space-between;"><span>۱</span><span id="defaultUserSpeedLabel">۱.۰</span><span>۵</span></div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>ضریب حضور دانشجو</label>
+                <input type="number" id="attendanceFactor" value="0.5" step="0.05" min="0" max="1">
+            </div>
+
+            <div class="status-box" id="statusBox">
+                <div class="spinner"></div>
+                <div class="msg"><i class="fas fa-microchip"></i> در حال محاسبه ...</div>
+            </div>
+
+            <button class="btn-primary" id="runBtn" onclick="runOptimization()" style="width:100%; justify-content:center; margin-top:6px;">
+                <i class="fas fa-play"></i> اجرای بهینه‌سازی
+            </button>
+            <div class="text-muted mt-2" style="font-size:13px;">
+                <i class="fas fa-info-circle"></i> الگوریتم Greedy (سریع، تقریب‌زده) – نیازی به کتابخانه خارجی ندارد.
+            </div>
+        </div>
+    </div>
+
+    <div id="resultArea" style="display:none;" class="fade-in">
+        <div class="result-section">
+            <h2 style="font-size:22px; margin-bottom:10px;"><i class="fas fa-chart-pie"></i> نتایج</h2>
+            <div class="result-grid" id="statsGrid"></div>
+            <h3 style="margin:18px 0 8px;">روترهای منتخب</h3>
+            <div style="overflow-x:auto;"><table class="detail-table" id="routerTable"><thead><tr><th>#</th><th>نوع</th><th>مختصات (x,y)</th><th>برد مؤثر</th><th>سرعت</th><th>ظرفیت</th></tr></thead><tbody id="routerTableBody"></tbody></table></div>
+            <h3 style="margin:18px 0 8px;">سرعت دانشکده‌ها</h3>
+            <div style="overflow-x:auto;"><table class="detail-table" id="facultySpeedTable"><thead><tr><th>دانشکده</th><th>سرعت دریافتی</th><th>نیاز حداقل</th><th>وضعیت</th></tr></thead><tbody id="facultySpeedBody"></tbody></table></div>
+            <h3 style="margin:22px 0 8px;">نقشه پوشش</h3>
+            <div class="map-container"><canvas id="mapCanvas" width="700" height="450"></canvas></div>
+            <div class="explanation-box" id="explanationBox">
+                <i class="fas fa-lightbulb" style="margin-left:10px;"></i>
+                <strong>تحلیل سناریو:</strong>
+                <div id="explanationText" style="margin-top:6px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ====================================================================
+    //  داده‌های روترها
+    // ====================================================================
+    const ROUTER_TYPES = [
+        { id: 'eco',  name: 'اقتصادی', price: 1.8,  speed: 100,  range: 45,  capacity: 100,  color: '#f1c40f' },
+        { id: 'mid',  name: 'متوسط',   price: 3.5,  speed: 300,  range: 70,  capacity: 200,  color: '#3498db' },
+        { id: 'pro',  name: 'حرفه‌ای', price: 5.5,  speed: 1000, range: 120, capacity: 400,  color: '#2ecc71' }
+    ];
+
+    // ====================================================================
+    //  مدیریت دانشکده‌ها
+    // ====================================================================
+    let faculties = [];
+
+    function addFaculty() {
+        const name = document.getElementById('facultyName').value.trim();
+        const x = parseFloat(document.getElementById('facultyX').value);
+        const y = parseFloat(document.getElementById('facultyY').value);
+        const w = parseFloat(document.getElementById('facultyW').value);
+        const h = parseFloat(document.getElementById('facultyH').value);
+        const pop = parseInt(document.getElementById('facultyPop').value);
+        const special = parseFloat(document.getElementById('facultySpecial').value) || 0;
+        const userSpeed = parseFloat(document.getElementById('facultyUserSpeed').value) || 1;
+        if (!name || isNaN(x) || isNaN(y) || isNaN(w) || isNaN(h) || isNaN(pop) || pop < 1) { alert('لطفاً تمام فیلدها را پر کنید.'); return; }
+        faculties.push({ id: Date.now() + Math.random(), name, x, y, w, h, population: pop, specialBW: special, userSpeed });
+        renderFacultyList();
+        clearFacultyForm();
+    }
+    function removeFaculty(id) { faculties = faculties.filter(f => f.id !== id); renderFacultyList(); }
+    function renderFacultyList() {
+        const container = document.getElementById('facultyListContainer');
+        if (faculties.length === 0) { container.innerHTML = '<div class="text-muted" style="padding:12px;">هیچ دانشکده‌ای تعریف نشده است.</div>'; return; }
+        let html = '';
+        faculties.forEach(f => { html += `<div class="faculty-item"><span class="name">${f.name}</span><span class="info">(${f.x}, ${f.y}) · ${f.population} دانشجو · ${f.userSpeed} Mbps</span><span class="remove-btn" onclick="removeFaculty(${f.id})"><i class="fas fa-times-circle"></i></span></div>`; });
+        container.innerHTML = html;
+    }
+    function clearFacultyForm() {
+        ['facultyName','facultyX','facultyY','facultyW','facultyH','facultyPop','facultySpecial','facultyUserSpeed'].forEach(id => {
+            if (id === 'facultyName') document.getElementById(id).value = '';
+            else if (id === 'facultyUserSpeed') document.getElementById(id).value = '1';
+            else if (id === 'facultySpecial') document.getElementById(id).value = '0';
+            else document.getElementById(id).value = '';
+        });
+    }
+    function loadSampleFaculties() {
+        faculties = [
+            { id: 1, name: 'مهندسی برق', x: 10, y: 20, w: 25, h: 18, population: 1200, specialBW: 0, userSpeed: 1 },
+            { id: 2, name: 'مهندسی کامپیوتر', x: 30, y: 45, w: 22, h: 20, population: 1500, specialBW: 0, userSpeed: 2.5 },
+            { id: 3, name: 'علوم پایه', x: 50, y: 15, w: 20, h: 18, population: 800, specialBW: 0, userSpeed: 1 },
+            { id: 4, name: 'ادبیات', x: 70, y: 60, w: 24, h: 16, population: 600, specialBW: 0, userSpeed: 1 },
+            { id: 5, name: 'هنر', x: 40, y: 70, w: 18, h: 18, population: 500, specialBW: 0, userSpeed: 1 },
+            { id: 6, name: 'مدیریت', x: 80, y: 30, w: 20, h: 20, population: 900, specialBW: 800, userSpeed: 1 },
+            { id: 7, name: 'عمران', x: 20, y: 80, w: 30, h: 20, population: 1100, specialBW: 0, userSpeed: 1 },
+            { id: 8, name: 'پزشکی', x: 60, y: 85, w: 28, h: 22, population: 1400, specialBW: 0, userSpeed: 1 },
+            { id: 9, name: 'ITC', x: 45, y: 40, w: 18, h: 14, population: 700, specialBW: 1200, userSpeed: 1.5 }
+        ];
+        renderFacultyList();
+    }
+
+    // ====================================================================
+    //  توابع کمکی
+    // ====================================================================
+    function generateCandidatePoints(faculties, mode) {
+        const points = [];
+        faculties.forEach(f => {
+            const cx = f.x, cy = f.y, hw = f.w/2, hh = f.h/2;
+            points.push({ x: cx, y: cy, label: f.name + '-مرکز' });
+            if (mode === 'surface') {
+                points.push({ x: cx - hw, y: cy - hh, label: f.name + '-رأس1' });
+                points.push({ x: cx + hw, y: cy - hh, label: f.name + '-رأس2' });
+                points.push({ x: cx - hw, y: cy + hh, label: f.name + '-رأس3' });
+                points.push({ x: cx + hw, y: cy + hh, label: f.name + '-رأس4' });
+            }
+        });
+        return points;
+    }
+
+    function getSpeedAtDistance(distance, routerSpeed, routerRange) {
+        if (distance > routerRange) return 0;
+        const ratio = distance / routerRange;
+        if (ratio <= 0.4) return routerSpeed;
+        if (ratio <= 0.7) return 0.7 * routerSpeed;
+        return 0.4 * routerSpeed;
+    }
+
+    function showStatus(show) {
+        const box = document.getElementById('statusBox');
+        const btn = document.getElementById('runBtn');
+        if (show) { box.classList.add('show'); btn.disabled = true; box.scrollIntoView({ behavior: 'smooth', block: 'center' }); } 
+        else { box.classList.remove('show'); btn.disabled = false; }
+    }
+
+    // اسلایدرها
+    document.getElementById('wallFactor').addEventListener('input', function() { document.getElementById('wallFactorLabel').textContent = parseFloat(this.value).toFixed(2); });
+    document.getElementById('concurrencyFactor').addEventListener('input', function() { document.getElementById('concurrencyFactorLabel').textContent = parseFloat(this.value).toFixed(2); });
+    document.getElementById('defaultUserSpeed').addEventListener('input', function() { document.getElementById('defaultUserSpeedLabel').textContent = parseFloat(this.value).toFixed(1); });
+
+    // ====================================================================
+    //  الگوریتم Greedy (جایگزین MILP)
+    // ====================================================================
+    function runGreedyOptimization(faculties, candidates, routerModels, u, B_min, wallFactor, maxRouters) {
+        const I = faculties.length;
+        const J = candidates.length;
+        const K = routerModels.length;
+
+        let uncovered = new Array(I).fill(true);
+        let assignedUsers = Array.from({ length: I }, () => Array(J).fill(0).map(() => Array(K).fill(0)));
+        let selectedRouters = [];
+        let totalCost = 0;
+        let remainingCapacity = routerModels.map(r => r.capacity);
+        let totalRoutersCount = 0;
+        let maxR = maxRouters || I * 2;
+
+        while (uncovered.some(u => u === true) && totalRoutersCount < maxR) {
+            let bestScore = -1;
+            let bestJ = -1;
+            let bestK = -1;
+
+            for (let j = 0; j < J; j++) {
+                for (let k = 0; k < K; k++) {
+                    if (remainingCapacity[k] <= 0) continue;
+                    let score = 0;
+                    for (let i = 0; i < I; i++) {
+                        if (uncovered[i]) {
+                            const dist = Math.hypot(faculties[i].x - candidates[j].x, faculties[i].y - candidates[j].y);
+                            const effectiveRange = routerModels[k].range * wallFactor;
+                            if (dist <= effectiveRange) {
+                                score += u[i] * (faculties[i].userSpeed || 1);
+                            }
+                        }
+                    }
+                    if (score > bestScore) { bestScore = score; bestJ = j; bestK = k; }
+                }
+            }
+
+            if (bestJ === -1 || bestScore === 0) break;
+
+            const router = routerModels[bestK];
+            selectedRouters.push({
+                candidateIndex: bestJ,
+                routerType: router,
+                x: candidates[bestJ].x,
+                y: candidates[bestJ].y,
+                label: candidates[bestJ].label
+            });
+            totalCost += router.price;
+            totalRoutersCount++;
+            remainingCapacity[bestK] -= 1;
+
+            let capLeft = router.capacity;
+            for (let i = 0; i < I; i++) {
+                if (uncovered[i] && capLeft > 0) {
+                    const dist = Math.hypot(faculties[i].x - candidates[bestJ].x, faculties[i].y - candidates[bestJ].y);
+                    const effectiveRange = router.range * wallFactor;
+                    if (dist <= effectiveRange) {
+                        const assign = Math.min(u[i], capLeft);
+                        assignedUsers[i][bestJ][bestK] = assign;
+                        capLeft -= assign;
+                        uncovered[i] = false;
+                    }
+                }
+            }
+        }
+
+        const facultySpeed = Array(I).fill(0);
+        for (let i = 0; i < I; i++) {
+            let totalBW = 0;
+            for (let j = 0; j < J; j++) {
+                for (let k = 0; k < K; k++) {
+                    const val = assignedUsers[i][j][k];
+                    if (val > 0) {
+                        const dist = Math.hypot(faculties[i].x - candidates[j].x, faculties[i].y - candidates[j].y);
+                        const effectiveRange = routerModels[k].range * wallFactor;
+                        const speed = getSpeedAtDistance(dist, routerModels[k].speed, effectiveRange);
+                        totalBW += val * speed;
+                    }
+                }
+            }
+            facultySpeed[i] = totalBW;
+        }
+
+        return { installedRouters: selectedRouters, facultySpeed, totalCost };
+    }
+
+    // ====================================================================
+    //  تابع اصلی
+    // ====================================================================
+    async function runOptimization() {
+        if (faculties.length < 2) { alert('حداقل ۲ دانشکده تعریف کنید.'); return; }
+
+        showStatus(true);
+        await new Promise(r => setTimeout(r, 100));
+
+        try {
+            const wallFactor = parseFloat(document.getElementById('wallFactor').value);
+            const concurrency = parseFloat(document.getElementById('concurrencyFactor').value);
+            const defaultUserSpeed = parseFloat(document.getElementById('defaultUserSpeed').value);
+            const attendance = parseFloat(document.getElementById('attendanceFactor').value) || 0.5;
+            const mode = document.getElementById('candidateMode').value;
+            const maxRoutersInput = document.getElementById('maxRouters').value;
+            let maxRouters = maxRoutersInput ? parseInt(maxRoutersInput) : null;
+
+            const activeRouterIds = [];
+            if (document.getElementById('ckEconomy').checked) activeRouterIds.push('eco');
+            if (document.getElementById('ckMedium').checked) activeRouterIds.push('mid');
+            if (document.getElementById('ckAdvanced').checked) activeRouterIds.push('pro');
+            if (activeRouterIds.length === 0) { alert('حداقل یک مدل روتر انتخاب کنید.'); showStatus(false); return; }
+            const routerModels = ROUTER_TYPES.filter(r => activeRouterIds.includes(r.id));
+
+            const candidates = generateCandidatePoints(faculties, mode);
+            if (candidates.length === 0) { alert('نقطه کاندیدی وجود ندارد.'); showStatus(false); return; }
+
+            const u = faculties.map(f => Math.round(f.population * attendance * concurrency));
+            const B_min = faculties.map((f, idx) => {
+                const speedPerUser = (f.userSpeed && f.userSpeed > 0) ? f.userSpeed : defaultUserSpeed;
+                return Math.max(u[idx] * speedPerUser, f.specialBW || 0);
+            });
+
+            const greedyResult = runGreedyOptimization(faculties, candidates, routerModels, u, B_min, wallFactor, maxRouters);
+            
+            displayResults(greedyResult.installedRouters, greedyResult.facultySpeed, candidates, faculties, B_min, wallFactor, concurrency, defaultUserSpeed);
+
+        } catch (err) {
+            showStatus(false);
+            alert('خطا: ' + err.message);
+            console.error(err);
+        }
+    }
+
+    // ====================================================================
+    //  نمایش نتایج
+    // ====================================================================
+    function displayResults(routers, facultySpeed, candidates, faculties, B_min, wallFactor, concurrency, defaultUserSpeed) {
+        const area = document.getElementById('resultArea');
+        area.style.display = 'block';
+
+        const totalCost = routers.reduce((s, r) => s + r.routerType.price, 0);
+        const totalSpeed = routers.reduce((s, r) => s + r.routerType.speed, 0);
+        const totalCoverage = facultySpeed.filter(s => s > 0).length;
+
+        document.getElementById('statsGrid').innerHTML = `
+            <div class="stat-card"><div class="label">هزینه کل</div><div class="value">${totalCost.toFixed(2)} میلیارد</div></div>
+            <div class="stat-card green"><div class="label">تعداد روتر</div><div class="value">${routers.length}</div></div>
+            <div class="stat-card gold"><div class="label">سرعت کل</div><div class="value">${totalSpeed} Mbps</div></div>
+            <div class="stat-card purple"><div class="label">پوشش</div><div class="value">${totalCoverage} از ${faculties.length}</div></div>
+        `;
+
+        const tbody = document.getElementById('routerTableBody');
+        tbody.innerHTML = '';
+        routers.forEach((r, idx) => {
+            tbody.innerHTML += `<tr><td>${idx+1}</td><td><span style="display:inline-block;width:12px;height:12px;border-radius:4px;background:${r.routerType.color};margin-left:6px;"></span>${r.routerType.name}</td><td>(${r.x.toFixed(1)}, ${r.y.toFixed(1)})</td><td>${(r.routerType.range * wallFactor).toFixed(1)}</td><td>${r.routerType.speed}</td><td>${Math.round(r.routerType.capacity)}</td></tr>`;
+        });
+
+        const speedBody = document.getElementById('facultySpeedBody');
+        speedBody.innerHTML = '';
+        faculties.forEach((f, i) => {
+            const speed = facultySpeed[i] || 0;
+            const need = B_min[i] || 0;
+            speedBody.innerHTML += `<tr><td>${f.name}</td><td>${speed.toFixed(1)}</td><td>${need.toFixed(1)}</td><td>${speed >= need ? '✅ تأمین' : '❌ ناکافی'}</td></tr>`;
+        });
+
+        drawMap(faculties, candidates, routers, wallFactor);
+
+        let explanation = `
+            <strong>الگوریتم:</strong> Greedy (حریصانه) – سریع و تقریب‌زده<br>
+            <strong>سناریوها:</strong><br>
+            • کاهش برد: ${wallFactor.toFixed(2)}<br>
+            • اتصال همزمان: ${concurrency.toFixed(2)}<br>
+            • سرعت پیش‌فرض: ${defaultUserSpeed.toFixed(1)} Mbps<br>
+            • سرعت اختصاصی: ${faculties.map(f => `${f.name}(${f.userSpeed})`).join('، ')}<br><br>
+            <strong>نتایج:</strong><br>
+            • تعداد روتر: ${routers.length}<br>
+            • هزینه: ${totalCost.toFixed(2)} میلیارد تومان<br>
+            • پوشش: ${totalCoverage} از ${faculties.length} دانشکده
+        `;
+        const weak = faculties.filter((f,i) => facultySpeed[i] < B_min[i]);
+        if (weak.length > 0) {
+            explanation += `<br><span style="color:#b22234;">⚠️ دانشکده‌های ${weak.map(f=>f.name).join('، ')} سرعت کافی دریافت نمی‌کنند.</span>`;
+        } else {
+            explanation += `<br><span style="color:#0f7b4b;">✅ همه دانشکده‌ها سرعت مورد نیاز را دریافت می‌کنند.</span>`;
+        }
+        document.getElementById('explanationText').innerHTML = explanation;
+        area.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        showStatus(false);
+    }
+
+    // ====================================================================
+    //  رسم نقشه
+    // ====================================================================
+    function drawMap(faculties, candidates, routers, wallFactor) {
+        const canvas = document.getElementById('mapCanvas');
+        const ctx = canvas.getContext('2d');
+        const W = canvas.width, H = canvas.height;
+        ctx.clearRect(0, 0, W, H);
+
+        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+        [...faculties, ...candidates].forEach(p => { if (p.x < minX) minX = p.x; if (p.x > maxX) maxX = p.x; if (p.y < minY) minY = p.y; if (p.y > maxY) maxY = p.y; });
+        const margin = 40, rangeX = (maxX - minX) || 1, rangeY = (maxY - minY) || 1;
+        const scale = Math.min((W - 2*margin) / rangeX, (H - 2*margin) / rangeY);
+        const transform = (x,y) => ({ x: margin + (x - minX) * scale, y: margin + (y - minY) * scale });
+
+        candidates.forEach(c => { const p = transform(c.x, c.y); ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, 2*Math.PI); ctx.fillStyle = '#b0b8c5'; ctx.fill(); });
+        faculties.forEach(f => { const p = transform(f.x, f.y); ctx.fillStyle = '#1a3b5c'; ctx.fillRect(p.x-6, p.y-6, 12, 12); ctx.font = '11px Tahoma'; ctx.fillStyle = '#0b2b4a'; ctx.fillText(f.name, p.x+10, p.y-4); });
+        routers.forEach(r => {
+            const pos = transform(r.x, r.y);
+            const radius = r.routerType.range * wallFactor * scale;
+            ctx.beginPath(); ctx.arc(pos.x, pos.y, radius, 0, 2*Math.PI);
+            ctx.fillStyle = r.routerType.color + '30'; ctx.fill();
+            ctx.strokeStyle = r.routerType.color; ctx.lineWidth = 2; ctx.setLineDash([6,4]); ctx.stroke(); ctx.setLineDash([]);
+            ctx.beginPath(); ctx.arc(pos.x, pos.y, 8, 0, 2*Math.PI);
+            ctx.fillStyle = r.routerType.color; ctx.fill();
+            ctx.strokeStyle = 'white'; ctx.lineWidth = 2; ctx.stroke();
+            ctx.font = 'bold 12px Tahoma'; ctx.fillStyle = '#1a1a2e'; ctx.fillText('R' + (routers.indexOf(r)+1), pos.x+12, pos.y-10);
+        });
+    }
+
+    // ====================================================================
+    //  بارگذاری اولیه
+    // ====================================================================
+    window.onload = function() {
+        loadSampleFaculties();
+        renderFacultyList();
+        document.getElementById('wallFactorLabel').textContent = '1.00';
+        document.getElementById('concurrencyFactorLabel').textContent = '0.40';
+        document.getElementById('defaultUserSpeedLabel').textContent = '1.0';
+    };
+</script>
+</body>
+</html>
